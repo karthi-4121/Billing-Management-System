@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Purchase History</title>
+    <style>
+        body {
+            font-family: Segoe UI, sans-serif;
+            background: #eef2f7;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #1f2937;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h3 {
+            margin: 0 0 10px 0;
+        }
+
+        .card p {
+            margin: 6px 0;
+        }
+
+        .card a {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 6px 12px;
+            background: #2563eb;
+            color: #fff;
+            border-radius: 6px;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>Purchase History — {{ email }}</h2>
+
+        <div class="cards">
+            {% for bill in bills %}
+            <div class="card">
+                <h3>Bill #{{ bill.id }}</h3>
+                <p><strong>Date:</strong> {{ bill.created_at|date:"d M Y, H:i" }}</p>
+                <p><strong>Net Total:</strong> ₹{{ bill.net_total }}</p>
+                <p><strong>Balance:</strong> ₹{{ bill.balance }}</p>
+                <a href="{% url 'bill_detail' bill.id %}">View Details</a>
+            </div>
+            {% empty %}
+            <p>No purchase history found.</p>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bill Details</title>
+    <style>
+        body { font-family: Segoe UI, sans-serif; background:#eef2f7; }
+        .container { max-width:1000px; margin:auto; padding:20px; }
+        .card { background:white; padding:20px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.08); margin-bottom:20px; }
+        table { width:100%; border-collapse:collapse; }
+        th, td { border:1px solid #ddd; padding:8px; text-align:center; }
+        th { background:#f3f3f3; }
+        .summary { text-align:right; margin-top:10px; }
+        .balance { font-weight:700; color:#16a34a; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h2>Bill Details - #{{ bill.id }}</h2>
+        <p><b>Email:</b> {{ bill.customer_email }}</p>
+        <p><b>Date:</b> {{ bill.created_at }}</p>
+        <table>
+            <tr>
+                <th>Product</th>
+                <th>Qty</th>
+                <th>Unit Price</th>
+                <th>Purchase Price</th>
+                <th>Tax(Item)</th>
+                <th>Tax(Payable)</th>
+                <th>Total</th>
+            </tr>
+            {% for item in bill.items.all %}
+            <tr>
+                <td>{{ item.product.name }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.unit_price }}</td>
+                <td>{{ item.purchase_price }}</td>
+                <td>{{ item.tax_amount }}</td>
+                <td>{{ item.tax_payable|floatformat:2 }}</td>
+                <td>{{ item.total_price|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        <div class="summary">
+            <p>Total w/o Tax: {{ bill.total_without_tax }}</p>
+            <p>Total Tax: {{ bill.total_tax }}</p>
+            <p>Net Total: {{ bill.net_total }}</p>
+            <p>Rounded Total: {{ bill.rounded_total }}</p>
+            <p>Paid Amount: {{ bill.paid_amount }}</p>
+            <p class="balance">Balance: {{ bill.balance }}</p>
+        </div>
+    </div>
+</div>
+</body>
+</html>

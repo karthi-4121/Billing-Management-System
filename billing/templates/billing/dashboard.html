@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Welcome Dashboard</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Segoe UI, sans-serif;
+            background: linear-gradient(135deg, #3742fa, #2f3542);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card {
+            background: white;
+            padding: 50px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            width: 420px;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+            color: #2f3542;
+        }
+
+        p {
+            color: #57606f;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 14px 30px;
+            background: #3742fa;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+
+        .btn:hover {
+            background: #2f3542;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="card">
+    <h1>Welcome 👋</h1>
+    <p>Billing Management System</p>
+
+    <a href="/billing/" class="btn">
+        Create New Bill
+    </a>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Billing</title>
+    <style>
+        body {
+            font-family: Segoe UI, sans-serif;
+            background: #eef2f7;
+            margin: 0;
+        }
+
+        .wrapper {
+            max-width: 1000px;
+            margin: 30px auto;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background: #f3f3f3;
+        }
+
+        input,
+        select {
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .add {
+            background: #2563eb;
+            color: white;
+        }
+
+        .remove {
+            background: #dc2626;
+            color: white;
+        }
+
+        .submit {
+            background: #16a34a;
+            color: white;
+            width: 100%;
+            margin-top: 10px;
+            font-size: 16px;
+        }
+
+        .paid-box {
+            width: 200px;
+            margin-left: 10px;
+        }
+
+        .denoms {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .denoms div {
+            display: flex;
+            justify-content: space-between;
+            background: #f9fafb;
+            padding: 6px;
+            border-radius: 6px;
+        }
+
+        .error {
+            color: red;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .grand-total {
+            margin-top: 10px;
+            text-align: right;
+            font-weight: 700;
+            font-size: 18px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrapper">
+        <form method="POST">
+            {% csrf_token %}
+            {% if error %}<div class="error">{{ error }}</div>{% endif %}
+
+            <div class="card">
+                <h2>Billing Page</h2>
+                <label>Email</label>
+                <input type="email" name="email" required style="width:100%; margin-bottom:10px;">
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Unit Price</th>
+                            <th>Quantity</th>
+                            <th>Price</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bill-body">
+                        <tr>
+                            <td>
+                                <select name="product[]" onchange="updateUnitPrice(this)" required>
+                                    <option value="" disabled selected>Select Product</option>
+                                    {% for p in products %}
+                                    <option value="{{ p.product_id }}" data-price="{{ p.unit_price }}">{{ p.name }} ({{
+                                        p.product_id }})</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td><input type="number" name="unit_price[]" value="0" readonly></td>
+                            <td><input type="number" name="qty[]" value="1" min="1"
+                                    onchange="updatePurchasePrice(this)"></td>
+                            <td><input type="number" name="purchase_price[]" value="0" readonly></td>
+                            <td><button type="button" class="remove" onclick="removeRow(this)">X</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button type="button" class="add" onclick="addRow()">+ Add Item</button>
+
+                <div class="grand-total">Grand Total: <span id="grand-total">0.00</span></div>
+            </div>
+
+            <div class="card">
+                <h3>Payment & Denominations</h3>
+                <div class="denoms">
+                    {% for d in denominations %}
+                    <div>
+                        <label>{{ d }}</label>
+                        <input type="number" name="denom_{{ d }}" value="0" min="0" onchange="updatePaidAmount()">
+                    </div>
+                    {% endfor %}
+                </div>
+                <div style="margin-top:15px;">
+                    <label>Paid Amount:</label>
+                    <input type="number" step="0.01" name="paid_amount" class="paid-box" id="paid_amount" required
+                        onchange="updateDenominations()">
+                </div>
+                <button type="submit" class="submit">Generate Bill</button>
+                <button class="mt-4"type="button" onclick="confirmCancel()">Cancel</button>
+
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function addRow() {
+            let tbody = document.getElementById('bill-body');
+            let row = tbody.rows[0].cloneNode(true);
+            row.querySelector('select').selectedIndex = 0;
+            row.querySelector('input[name="unit_price[]"]').value = 0;
+            row.querySelector('input[name="qty[]"]').value = 1;
+            row.querySelector('input[name="purchase_price[]"]').value = 0;
+            tbody.appendChild(row);
+        }
+
+        function removeRow(btn) {
+            let tbody = document.getElementById('bill-body');
+            if (tbody.rows.length > 1) btn.parentNode.parentNode.remove();
+            calculateGrandTotal();
+        }
+
+        function updateUnitPrice(select) {
+            let price = parseFloat(select.selectedOptions[0].dataset.price) || 0;
+            let row = select.closest('tr');
+            row.querySelector('input[name="unit_price[]"]').value = price.toFixed(2);
+            updatePurchasePrice(row.querySelector('input[name="qty[]"]'));
+        }
+
+        function updatePurchasePrice(qtyInput) {
+            let row = qtyInput.closest('tr');
+            let qty = parseInt(qtyInput.value) || 0;
+            let unitPrice = parseFloat(row.querySelector('input[name="unit_price[]"]').value) || 0;
+            row.querySelector('input[name="purchase_price[]"]').value = (qty * unitPrice).toFixed(2);
+            calculateGrandTotal();
+        }
+
+        function calculateGrandTotal() {
+            let total = 0;
+            document.querySelectorAll('input[name="purchase_price[]"]').forEach(input => {
+                total += parseFloat(input.value) || 0;
+            });
+            document.getElementById('grand-total').innerText = total.toFixed(2);
+        }
+
+        const DENOMS = [500, 100, 50, 20, 10, 5, 2, 1];
+
+        function updateDenominations() {
+            let amount = parseInt(document.getElementById('paid_amount').value) || 0;
+            DENOMS.forEach(d => {
+                let input = document.querySelector(`input[name='denom_${d}']`);
+                let count = Math.floor(amount / d);
+                input.value = count;
+                amount -= count * d;
+            });
+        }
+
+        function updatePaidAmount() {
+            let total = 0;
+            DENOMS.forEach(d => {
+                let count = parseInt(document.querySelector(`input[name='denom_${d}']`).value) || 0;
+                total += count * d;
+            });
+            document.getElementById('paid_amount').value = total.toFixed(2);
+        }
+    </script>
+    <script>
+        function confirmCancel() {
+            if (confirm("Cancel bill and go to welcome page?")) {
+                window.location.href = "/";
+            }
+        }
+    </script>
+</body>
+
+</html>
